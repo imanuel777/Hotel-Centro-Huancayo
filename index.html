@@ -158,7 +158,7 @@ label{display:block;font-size:13px;font-weight:600;margin:10px 0 6px}input,selec
       <div class="card">
         <div class="section-head"><h3>Reservas</h3><div class="toolbar"><button id="newReservation" class="btn btn-primary">Nueva reserva</button><input id="searchReservation" placeholder="Buscar reserva" style="width:260px"></div></div>
         <div id="reservationTopNotice" class="notice hidden"></div>
-        <div class="scroll"><table><thead><tr><th>Código</th><th>Huésped</th><th>Habitación</th><th>Ingreso</th><th>Salida</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="reservationRows"></tbody></table></div>
+        <div class="scroll"><table><thead><tr><th>Código</th><th>Huésped</th><th>Habitación</th><th>Ingreso</th><th>Salida</th><th>Costo</th><th>Pagado</th><th>Saldo</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="reservationRows"></tbody></table></div>
       </div>
       <div id="reservationFormCard" class="card hidden" style="margin-top:15px">
         <h3>Registrar reserva</h3>
@@ -210,6 +210,7 @@ label{display:block;font-size:13px;font-weight:600;margin:10px 0 6px}input,selec
     </section>
 
     <section data-screen="habitaciones" class="hidden">
+      <div class="info"><b>Estado visual “Reservada”:</b> aparece cuando existe una reserva Confirmada futura. La habitación sigue operativamente Disponible hasta el check-in y solo queda comprometida dentro del rango reservado.</div>
       <div id="adminRoomMetrics" class="summary-strip hidden">
         <div class="metric-card m-blue"><div class="big" id="roomTotal">0</div><div class="label">Total habitaciones</div><div class="metric-ico">🛏️</div></div>
         <div class="metric-card m-green"><div class="big" id="roomAvailable">0</div><div class="label">Disponibles</div><div class="metric-ico">🚪</div></div>
@@ -384,13 +385,13 @@ const businessRules=[
  ['RN04','La fecha de salida debe ser posterior a la fecha de ingreso.','Los formularios validan el rango de fechas.'],
  ['RN05','La cantidad de huéspedes no podrá superar la capacidad de la habitación.','Disponibilidad filtra por capacidad y la reserva conserva la cantidad solicitada.'],
  ['RN06','La tarifa aplicable será la vigente al momento de registrar la reserva.','La habitación muestra su tarifa vigente y el pago usa el costo calculado.'],
- ['RN07','Para confirmar una reserva deberá registrarse el adelanto establecido por el hotel.','La reserva nace Pendiente y se confirma cuando se registra un pago/adelanto verificado.'],
+ ['RN07','Para confirmar una reserva deberá registrarse un adelanto establecido por el hotel.','La reserva nace Pendiente y pasa a Confirmada al registrar un adelanto o pago verificado; el saldo restante puede quedar pendiente.'],
  ['RN08','Una reserva permanecerá Pendiente hasta verificar el adelanto.','Registrar reserva crea estado Pendiente; registrar pago cambia a Confirmada.'],
  ['RN09','Una reserva Pendiente puede vencer si supera el plazo configurado.','Fecha límite opcional y acción Evaluar vencimientos.'],
  ['RN10','Toda modificación de fechas estará sujeta a nueva disponibilidad.','Regla documentada para modificaciones; el prototipo conserva la validación de disponibilidad.'],
  ['RN11','Las cancelaciones se atienden conforme a la política vigente.','Cancelar cambia el estado y conserva el registro.'],
  ['RN12','El check-in se realiza desde el horario definido por el hotel, salvo autorización.','El módulo Check-in controla que exista una reserva Confirmada y habitación operativa.'],
- ['RN13','El check-out se realiza según el horario definido por el hotel, salvo autorización.','El módulo Check-out finaliza la estadía y envía la habitación a limpieza.'],
+ ['RN13','El check-out se realiza según el horario definido por el hotel, salvo autorización.','El módulo Check-out exige saldo pendiente igual a cero antes de finalizar la estadía y luego envía la habitación a limpieza.'],
  ['RN14','Para check-in, el huésped debe estar identificado.','Toda reserva está vinculada a un huésped registrado.'],
  ['RN15','Una habitación en mantenimiento o limpieza no podrá asignarse.','Registrar reserva solo lista habitaciones en estado Disponible.'],
  ['RN16','Todo adelanto o pago debe quedar asociado a una reserva o estadía.','Cada pago almacena el código de reserva.'],
@@ -404,6 +405,13 @@ const businessRules=[
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function nightsBetween(a,b){if(!a||!b)return 0;return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000))}
 function costOf(r){const room=roomObj(r?.room),n=nightsBetween(r?.checkin,r?.checkout),rate=Number(room?.rate||0);return {room,nights:n,rate,total:n*rate}}
+function paidTotal(code){return state.payments.filter(p=>p.reservation===code).reduce((a,p)=>a+Number(p.amount||0),0)}
+function balanceOf(code){const r=reservation(code);if(!r)return 0;return Math.max(0,costOf(r).total-paidTotal(code))}
+function canCheckIn(r){return r&&r.status==='Confirmada'&&r.checkin<=today()}
+function futureConfirmedReservation(room){
+ const t=today();
+ return state.reservations.filter(r=>r.room===room&&r.status==='Confirmada'&&r.checkin>t).sort((a,b)=>a.checkin.localeCompare(b.checkin))[0]||null
+}
 function hasOverlap(room,from,to,exclude=''){return state.reservations.some(r=>r.code!==exclude&&r.room===room&&!['Cancelada','Finalizada','Vencida'].includes(r.status)&&from<r.checkout&&to>r.checkin)}
 function stateHtml(s){const c=s==='Disponible'?'s-disponible':s==='Ocupada'?'s-ocupada':s==='En limpieza'?'s-limpieza':s==='Mantenimiento'?'s-mantenimiento':s==='Pendiente'?'s-pendiente':s==='Confirmada'?'s-confirmada':s==='En estadía'?'s-estadia':s==='Finalizada'?'s-finalizada':s==='Vencida'?'s-cancelada':'s-cancelada';return `<span class="state ${c}"><span class="dot"></span>${s}</span>`}
 
@@ -439,13 +447,17 @@ function renderGuests(){
 function renderReservationRoomOptions(){rRoom.innerHTML=state.rooms.filter(r=>r.active&&r.status==='Disponible').map(r=>`<option value="${r.number}">${r.number} · ${r.type} · S/ ${r.rate}</option>`).join('')}
 function renderReservations(){
  const q=(searchReservation.value||'').toLowerCase();
- reservationRows.innerHTML=state.reservations.filter(r=>(r.code+' '+guestName(r.guestDoc)).toLowerCase().includes(q)).map(r=>`<tr><td>${r.code}</td><td>${esc(guestName(r.guestDoc))}</td><td>${r.room}</td><td>${r.checkin}</td><td>${r.checkout}</td><td>${r.expires||'—'}</td><td>${stateHtml(r.status)}</td><td><div class="room-actions">${['Administrador','Recepcionista'].includes(currentRole)&&r.status==='Pendiente'?`<button class="btn btn-outline mini payQuick" data-code="${r.code}">Registrar pago</button>`:''}${['Administrador','Recepcionista'].includes(currentRole)&&['Pendiente','Confirmada'].includes(r.status)?`<button class="btn btn-danger mini cancelRes" data-code="${r.code}">Cancelar</button>`:''}${r.status==='Confirmada'?'<span class="muted small">Siguiente: Check-in</span>':''}${r.status==='En estadía'?'<span class="muted small">Siguiente: Check-out</span>':''}</div></td></tr>`).join('');
+ reservationRows.innerHTML=state.reservations.filter(r=>(r.code+' '+guestName(r.guestDoc)).toLowerCase().includes(q)).map(r=>{
+  const c=costOf(r),paid=paidTotal(r.code),bal=Math.max(0,c.total-paid);
+  const next=r.status==='Confirmada'?(canCheckIn(r)?'<span class="muted small">Listo para Check-in</span>':'<span class="muted small">Espera fecha de ingreso</span>'):r.status==='En estadía'?'<span class="muted small">Siguiente: Check-out</span>':'';
+  return `<tr><td>${r.code}</td><td>${esc(guestName(r.guestDoc))}</td><td>${r.room}</td><td>${r.checkin}</td><td>${r.checkout}</td><td>S/ ${c.total.toFixed(2)}</td><td>S/ ${paid.toFixed(2)}</td><td><b>S/ ${bal.toFixed(2)}</b></td><td>${r.expires||'—'}</td><td>${stateHtml(r.status)}</td><td><div class="room-actions">${['Administrador','Recepcionista'].includes(currentRole)&&r.status==='Pendiente'?`<button class="btn btn-outline mini payQuick" data-code="${r.code}">Registrar adelanto</button>`:''}${['Administrador','Recepcionista'].includes(currentRole)&&r.status==='Confirmada'&&bal>0?`<button class="btn btn-outline mini payQuick" data-code="${r.code}">Registrar pago</button>`:''}${['Administrador','Recepcionista'].includes(currentRole)&&['Pendiente','Confirmada'].includes(r.status)?`<button class="btn btn-danger mini cancelRes" data-code="${r.code}">Cancelar</button>`:''}${next}</div></td></tr>`;
+ }).join('');
  document.querySelectorAll('.payQuick').forEach(b=>b.onclick=()=>{showPage('pagos');payReservation.value=b.dataset.code;updatePaymentCostBox()});
  document.querySelectorAll('.cancelRes').forEach(b=>b.onclick=()=>{const r=reservation(b.dataset.code);if(r){r.status='Cancelada';logAction('RN11/RN20: reserva cancelada; registro conservado',r.code);saveState();renderAll()}});
 }
 function updatePaymentCostBox(){
  const r=reservation(payReservation.value);if(!r){paymentCostBox.textContent='Selecciona una reserva para ver el costo.';return}
- const c=costOf(r);paymentCostBox.innerHTML=`<b>Habitación:</b> ${r.room} - ${c.room?.type||''}<br><b>Tarifa por noche:</b> S/ ${c.rate.toFixed(2)}<br><b>Noches:</b> ${c.nights}<br><b>Costo total:</b> S/ ${c.total.toFixed(2)}`;
+ const c=costOf(r),paid=paidTotal(r.code),bal=Math.max(0,c.total-paid);paymentCostBox.innerHTML=`<b>Habitación:</b> ${r.room} - ${c.room?.type||''}<br><b>Tarifa por noche:</b> S/ ${c.rate.toFixed(2)}<br><b>Noches:</b> ${c.nights}<br><b>Costo total:</b> S/ ${c.total.toFixed(2)}<br><b>Total pagado:</b> S/ ${paid.toFixed(2)}<br><b>Saldo pendiente:</b> S/ ${bal.toFixed(2)}`;
 }
 function renderPayments(){
  const cur=payReservation.value;
@@ -649,8 +661,8 @@ window.downloadReceiptPdf=function(id){
  a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-function renderCheckin(){checkinReservation.innerHTML=state.reservations.filter(r=>r.status==='Confirmada').map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · Hab. ${r.room}</option>`).join('')}
-function renderCheckout(){checkoutReservation.innerHTML=state.reservations.filter(r=>r.status==='En estadía').map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · Hab. ${r.room}</option>`).join('')}
+function renderCheckin(){checkinReservation.innerHTML=state.reservations.filter(canCheckIn).map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · Hab. ${r.room} · Saldo S/ ${balanceOf(r.code).toFixed(2)}</option>`).join('')||'<option value="">No hay reservas listas para check-in</option>'}
+function renderCheckout(){checkoutReservation.innerHTML=state.reservations.filter(r=>r.status==='En estadía').map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · Hab. ${r.room} · Saldo S/ ${balanceOf(r.code).toFixed(2)}</option>`).join('')||'<option value="">No hay estadías activas</option>'}
 function renderRooms(){
  const q=(roomSearch.value||'').toLowerCase(),f=roomFilter.value;
  const list=state.rooms.filter(r=>r.active&&(r.number+' '+r.type).toLowerCase().includes(q)&&(!f||r.status===f));
@@ -664,7 +676,7 @@ function renderRooms(){
      else if(r.status==='Ocupada') action='<span class="muted">Bloqueado: falta check-out</span>';
      else action=`<select class="roomState" data-room="${r.number}">${[r.status,'En limpieza','Disponible'].filter((v,i,a)=>a.indexOf(v)===i).map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
    }else if(currentRole==='Mantenimiento') action='<span class="muted">Solo consulta · gestionar incidencia</span>';
-   return `<tr><td><b>${r.number}</b></td><td>${r.type}</td><td>${r.capacity}</td><td>S/ ${Number(r.rate).toFixed(2)}</td><td>${r.floor}</td><td>${stateHtml(r.status)}</td><td>${action}</td></tr>`
+   return `<tr><td><b>${r.number}</b></td><td>${r.type}</td><td>${r.capacity}</td><td>S/ ${Number(r.rate).toFixed(2)}</td><td>${r.floor}</td><td>${(r.status==='Disponible'&&futureConfirmedReservation(r.number))?`<span class="state s-confirmada"><span class="dot"></span>Reservada ${futureConfirmedReservation(r.number).checkin}–${futureConfirmedReservation(r.number).checkout}</span>`:stateHtml(r.status)}</td><td>${action}</td></tr>`
  }).join('');
  document.querySelectorAll('.roomState').forEach(s=>s.onchange=()=>{const r=roomObj(s.dataset.room),next=s.value;if(currentRole==='Limpieza'&&r.status==='Mantenimiento'){renderAll();return}if(currentRole==='Limpieza'&&r.status==='Ocupada'){renderAll();return}const prev=r.status;r.status=next;logAction('Estado de habitación '+r.number+': '+prev+' → '+next,'Hab. '+r.number);saveState();renderAll()});
  roomTotal.textContent=state.rooms.filter(r=>r.active).length;roomAvailable.textContent=state.rooms.filter(r=>r.active&&r.status==='Disponible').length;roomOccupied.textContent=state.rooms.filter(r=>r.active&&['Ocupada','En limpieza'].includes(r.status)).length;roomMaint.textContent=state.rooms.filter(r=>r.active&&r.status==='Mantenimiento').length;
@@ -693,7 +705,7 @@ document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>showPage(b.dat
 
 btnAvailability.onclick=()=>{
  const from=avIn.value,to=avOut.value,type=avType.value,count=Number(avCount.value||1);if(!from||!to||to<=from){availabilityBox.innerHTML='<div class="warnbox">Verifica las fechas.</div>';return}
- const rows=state.rooms.filter(r=>r.active&&r.status!=='Mantenimiento'&&r.capacity>=count&&(!type||r.type===type)&&!hasOverlap(r.number,from,to));
+ const rows=state.rooms.filter(r=>r.active&&r.status==='Disponible'&&r.capacity>=count&&(!type||r.type===type)&&!hasOverlap(r.number,from,to));
  availabilityBox.innerHTML=rows.length?`<table><thead><tr><th>Habitación</th><th>Tipo</th><th>Capacidad</th><th>Tarifa</th><th>Estado actual</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.number}</td><td>${r.type}</td><td>${r.capacity}</td><td>S/ ${r.rate}</td><td>${stateHtml(r.status)}</td></tr>`).join('')}</tbody></table>`:'<div class="warnbox">No hay habitaciones disponibles con esos criterios.</div>'
 };
 saveGuest.onclick=()=>{
@@ -732,13 +744,21 @@ saveReservation.onclick=()=>{
 searchReservation.oninput=renderReservations;payReservation.onchange=updatePaymentCostBox;
 paymentSearch.oninput=renderPayments;
 savePayment.onclick=()=>{
- const code=payReservation.value,amount=Number(payAmount.value),method=payMethod.value;if(!code||!amount)return;const p={id:gen('PAG'),reservation:code,amount,method,date:today()};state.payments.push(p);const r=reservation(code);if(r?.status==='Pendiente')r.status='Confirmada';logAction('RN16: pago/adelanto verificado por S/ '+amount.toFixed(2)+'; reserva '+(r?.status||''),code);saveState();paymentNotice.innerHTML=`<b>Pago registrado.</b> Reserva ${code}: ${r?.status||''}. Puedes emitir el comprobante.`;paymentNotice.classList.remove('hidden');renderAll()
+ const code=payReservation.value,amount=Number(payAmount.value),method=payMethod.value;if(!code||!amount)return;
+ const r=reservation(code);if(!r)return;
+ const c=costOf(r),paid=paidTotal(code),bal=Math.max(0,c.total-paid);
+ if(amount>bal+0.0001){paymentNotice.innerHTML=`<b>Pago rechazado.</b> El saldo pendiente es S/ ${bal.toFixed(2)}.`;paymentNotice.classList.remove('hidden');return}
+ const p={id:gen('PAG'),reservation:code,amount,method,date:today()};state.payments.push(p);
+ if(r.status==='Pendiente'&&amount>0)r.status='Confirmada';
+ const newBal=Math.max(0,c.total-paid-amount);
+ logAction('RN16: pago/adelanto verificado por S/ '+amount.toFixed(2)+'; saldo pendiente S/ '+newBal.toFixed(2),code);
+ saveState();paymentNotice.innerHTML=`<b>Pago registrado.</b> Reserva ${code}: ${r.status}. Saldo pendiente: <b>S/ ${newBal.toFixed(2)}</b>.`;paymentNotice.classList.remove('hidden');renderAll()
 };
 doCheckin.onclick=()=>{
- const r=reservation(checkinReservation.value);if(!r)return;const ro=roomObj(r.room);if(!ro||ro.status==='Mantenimiento'||ro.status==='Ocupada'){checkinNotice.textContent='No se puede realizar el check-in por el estado de la habitación.';checkinNotice.classList.remove('hidden');return}r.status='En estadía';ro.status='Ocupada';logAction('Check-in registrado; habitación '+r.room+' pasó a Ocupada',r.code);saveState();checkinNotice.innerHTML=`<b>Check-in registrado.</b> Habitación ${r.room} ahora está Ocupada.`;checkinNotice.classList.remove('hidden');renderAll()
+ const r=reservation(checkinReservation.value);if(!r||!canCheckIn(r)){checkinNotice.textContent='El check-in solo está disponible para reservas Confirmadas cuya fecha de ingreso ya haya llegado.';checkinNotice.classList.remove('hidden');return}const ro=roomObj(r.room);if(!ro||ro.status!=='Disponible'){checkinNotice.textContent='No se puede realizar el check-in por el estado de la habitación.';checkinNotice.classList.remove('hidden');return}r.status='En estadía';ro.status='Ocupada';logAction('Check-in registrado; habitación '+r.room+' pasó a Ocupada',r.code);saveState();checkinNotice.innerHTML=`<b>Check-in registrado.</b> Habitación ${r.room} ahora está Ocupada.`;checkinNotice.classList.remove('hidden');renderAll()
 };
 doCheckout.onclick=()=>{
- const r=reservation(checkoutReservation.value);if(!r)return;const ro=roomObj(r.room);r.status='Finalizada';if(ro)ro.status='En limpieza';logAction('Check-out registrado; habitación '+r.room+' pasó a En limpieza',r.code);saveState();checkoutNotice.innerHTML=`<b>Check-out registrado.</b> Habitación ${r.room} pasó a En limpieza.`;checkoutNotice.classList.remove('hidden');renderAll()
+ const r=reservation(checkoutReservation.value);if(!r)return;const ro=roomObj(r.room);const bal=balanceOf(r.code);if(bal>0.0001){checkoutNotice.innerHTML=`<b>Check-out bloqueado.</b> La reserva ${r.code} mantiene un saldo pendiente de <b>S/ ${bal.toFixed(2)}</b>. Registra el pago antes de finalizar la estadía.`;checkoutNotice.classList.remove('hidden');showPage('pagos');payReservation.value=r.code;updatePaymentCostBox();return}r.status='Finalizada';if(ro)ro.status='En limpieza';logAction('Check-out registrado; habitación '+r.room+' pasó a En limpieza',r.code);saveState();checkoutNotice.innerHTML=`<b>Check-out registrado.</b> Habitación ${r.room} pasó a En limpieza.`;checkoutNotice.classList.remove('hidden');renderAll()
 };
 reportIncident.onclick=()=>{const room=incidentRoom.value,desc=incidentDesc.value.trim();if(!room||!desc)return;const id=gen('INC');state.incidents.push({id,room,type:incidentType.value,priority:incidentPriority.value,desc,status:'Pendiente',reportedBy:currentRole,date:today()});logAction('Incidencia '+id+' reportada en habitación '+room,id);saveState();incidentNotice.innerHTML='<b>Incidencia reportada.</b> Quedó pendiente para Mantenimiento.';incidentNotice.classList.remove('hidden');incidentDesc.value='';renderAll()};
 saveIncident.onclick=()=>{const room=maintRoom.value,desc=maintDesc.value.trim();if(!room||!desc)return;const id=gen('INC');state.incidents.push({id,room,type:'Técnica',priority:'Media',desc,status:'Pendiente',reportedBy:currentRole,date:today()});logAction('Avería técnica '+id+' reportada en habitación '+room,id);saveState();maintDesc.value='';renderAll()};
