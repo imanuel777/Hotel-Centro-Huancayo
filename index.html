@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hotel Centro Huancayo - Prototipo v12</title>
+<style>
+:root{
+  --bg:#eef3f9;--panel:#fff;--text:#10213b;--muted:#65748a;--line:#d7e0ec;
+  --nav:#10213b;--nav2:#17365d;--blue:#1677ff;--green:#16a66a;--amber:#f5a300;
+  --red:#ef4444;--cyan:#14b8d4;--purple:#7c3aed;--shadow:0 10px 28px rgba(30,50,80,.08)
+}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}.hidden{display:none!important}.muted{color:var(--muted)}.small{font-size:12px}
+.app{min-height:100vh;display:grid;grid-template-columns:245px 1fr}.sidebar{background:linear-gradient(180deg,var(--nav),#0c2748);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 14px;border-bottom:1px solid rgba(255,255,255,.12)}
+.brand-logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#16a6ff,#68d7ff);display:grid;place-items:center;font-size:24px}
+.brand-title{font-weight:800;font-size:17px}.brand-sub{font-size:11px;color:#b8cae1;margin-top:3px}
+.nav{display:grid;gap:4px}.nav button{width:100%;border:0;background:transparent;color:#e6eef8;text-align:left;padding:11px 12px;border-radius:9px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.nav button:hover,.nav button.active{background:linear-gradient(90deg,#156bce,#177fe9);color:#fff}
+.nav .ico{width:20px;text-align:center}.side-foot{margin-top:auto;color:#9fb3cc;font-size:11px;padding:10px}
+main{min-width:0;padding:22px 24px 34px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
+.page-title h1{font-size:30px;margin:0}.page-title p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.userbar{display:flex;align-items:center;gap:10px}.badge{background:#dbeafe;color:#0b55bb;border-radius:999px;padding:7px 11px;font-weight:700;font-size:12px}
+.btn{border:0;border-radius:9px;padding:10px 14px;cursor:pointer}.btn-primary{background:var(--blue);color:white}.btn-outline{background:white;border:1px solid var(--line);color:var(--text)}.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}.btn-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}.btn-warning{background:#fff7df;color:#92400e;border:1px solid #f7d36a}.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:15px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.metric-card{color:#fff;border-radius:14px;padding:18px;min-height:120px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.metric-card .big{font-size:36px;font-weight:800}.metric-card .label{font-size:15px;font-weight:700}.metric-card .hint{font-size:12px;opacity:.84;margin-top:12px}.metric-card .metric-ico{position:absolute;right:18px;top:18px;font-size:42px;opacity:.28}
+.m-blue{background:linear-gradient(135deg,#1594ef,#0e70df)}.m-green{background:linear-gradient(135deg,#1fc47a,#0d9a57)}.m-amber{background:linear-gradient(135deg,#ffb21d,#f39100)}.m-red{background:linear-gradient(135deg,#f45656,#dc2e36)}.m-purple{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-head h3{margin:0;font-size:19px}.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 6px}input,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.form-grid.cols5{grid-template-columns:1fr 1.3fr 1fr 1fr 1.2fr}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.notice,.info,.warnbox{padding:11px 12px;border-radius:10px;font-size:13px;margin-top:12px}.notice{background:#ecfdf5;border:1px solid #bbf7d0;color:#166534}.info{background:#eff6ff;border:1px solid #bfdbfe;color:#174ea6}.warnbox{background:#fff7e6;border:1px solid #f6d58f;color:#9a5a00}
+.scroll{overflow:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}th{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.03em}
+.state{display:inline-flex;align-items:center;gap:6px;font-weight:700}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.s-disponible{color:#138a4b}.s-disponible .dot{background:#16a66a}.s-ocupada{color:#334155}.s-ocupada .dot{background:#64748b}.s-limpieza{color:#b45309}.s-limpieza .dot{background:#f59e0b}.s-mantenimiento{color:#c62828}.s-mantenimiento .dot{background:#ef4444}.s-pendiente{color:#b45309}.s-confirmada{color:#15803d}.s-estadia{color:#6d28d9}.s-finalizada{color:#1d4ed8}.s-cancelada{color:#b91c1c}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#eef4fa,#f7f9fc)}.login-card{width:min(460px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 18px 50px rgba(20,50,80,.12)}
+.login-card .brand{border:0;padding:0 0 10px;color:var(--text)}.login-card .brand-sub{color:var(--muted)}
+.room-actions{display:flex;gap:6px;flex-wrap:wrap}.mini{padding:6px 9px;font-size:12px}.summary-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
+.receipt{border:1px dashed #9fb0c5;border-radius:12px;padding:14px;background:#fbfdff}.receipt h4{margin:0 0 8px}.kv{display:grid;grid-template-columns:140px 1fr;gap:5px 10px;font-size:13px}
+@media(max-width:1100px){.g4,.summary-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid.cols5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:850px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.g2,.g4,.summary-strip,.form-grid,.form-grid.cols5{grid-template-columns:1fr}main{padding:15px}}
+
+@media print{
+  body *{visibility:hidden!important}
+  #receiptBox,#receiptBox *{visibility:visible!important}
+  #receiptBox{position:absolute;left:0;top:0;width:100%;box-shadow:none!important;border:0!important;background:#fff!important}
+  #receiptActions{display:none!important}
+}
+.receipt-doc{background:#fff;border:1px solid #cfd8e3;border-radius:12px;padding:22px}
+.receipt-top{display:grid;grid-template-columns:1.2fr 1fr .7fr;gap:18px;align-items:start;border-bottom:2px solid #1e3a5f;padding-bottom:14px}
+.receipt-brand h2{margin:0;font-size:24px;letter-spacing:.04em}.receipt-brand .hotel-word{font-size:12px;letter-spacing:.3em;color:#53657d}
+.receipt-meta{font-size:12px;line-height:1.55}.receipt-box{background:#eef5ff;border-radius:10px;padding:12px;font-size:12px}
+.qrbox{width:92px;height:92px;display:grid;grid-template-columns:repeat(13,1fr);grid-template-rows:repeat(13,1fr);gap:1px;background:#fff;border:5px solid #fff;box-shadow:0 0 0 1px #cfd8e3}
+.qrbox span{background:#fff}.qrbox span.on{background:#111827}
+.receipt-body{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:0;margin-top:14px;border-top:1px solid #9fb0c5;border-bottom:1px solid #9fb0c5}
+.receipt-col{padding:14px;border-right:1px solid #cbd5e1;font-size:12px}.receipt-col:last-child{border-right:0}
+.receipt-col h4{margin:0 0 10px;font-size:12px;color:#0f315c;text-transform:uppercase}
+.receipt-total{margin-top:10px;background:#eaf4ff;padding:10px;border-radius:8px;font-size:15px;font-weight:800;display:flex;justify-content:space-between}
+.receipt-footer{text-align:center;font-size:11px;color:#607086;padding-top:12px}
+
+</style>
+</head>
+<body>
+<section id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-logo">🛏️</div>
+      <div><div class="brand-title">Hotel Centro Huancayo</div><div class="brand-sub">Sistema de Gestión de Reservas</div></div>
+    </div>
+    <form id="loginForm">
+      <label>Usuario</label><input id="loginUser" autocomplete="username">
+      <label>Contraseña</label><input id="loginPass" type="password" autocomplete="current-password">
+      <button class="btn btn-primary" style="width:100%;margin-top:18px">Ingresar</button>
+      <div id="loginError" class="warnbox hidden">Usuario o contraseña incorrectos.</div>
+    </form>
+  </div>
+</section>
+
+<section id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🛏️</div>
+      <div><div class="brand-title">Hotel Centro Huancayo</div><div class="brand-sub">Sistema conectado por roles</div></div>
+    </div>
+    <nav id="nav" class="nav">
+      <button data-page="dashboard"><span class="ico">🏠</span>Inicio</button>
+      <button data-page="disponibilidad"><span class="ico">📅</span>Disponibilidad</button>
+      <button data-page="huespedes"><span class="ico">👥</span>Huéspedes</button>
+      <button data-page="reservas"><span class="ico">📄</span>Reservas</button>
+      <button data-page="pagos"><span class="ico">💳</span>Pagos</button>
+      <button data-page="checkin"><span class="ico">🚪</span>Check-in</button>
+      <button data-page="checkout"><span class="ico">↪️</span>Check-out</button>
+      <button data-page="habitaciones"><span class="ico">🛏️</span>Habitaciones</button>
+      <button data-page="incidencias"><span class="ico">⚠️</span>Reportar incidencia</button>
+      <button data-page="mantenimiento"><span class="ico">🔧</span>Mantenimiento</button>
+      <button data-page="tarifas"><span class="ico">🏷️</span>Tarifas</button>
+      <button data-page="reportes"><span class="ico">📊</span>Reportes</button>
+      <button data-page="historial"><span class="ico">🧾</span>Historial y auditoría</button>
+      <button data-page="reglas"><span class="ico">📚</span>Reglas aplicadas</button>
+      <button data-page="usuarios"><span class="ico">🔐</span>Usuarios</button>
+    </nav>
+    <div class="side-foot">Prototipo académico · auditoría y reglas RN01–RN22</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="page-title"><h1 id="pageTitle">Panel principal</h1><p id="pageSubtitle">Gestión operativa y administrativa</p></div>
+      <div class="userbar"><span id="roleBadge" class="badge">Administrador</span><button id="logoutBtn" class="btn btn-outline">Cerrar sesión</button></div>
+    </div>
+
+    <section data-screen="dashboard">
+      <div class="g4 grid">
+        <div class="metric-card m-blue"><div class="big" id="m1">0</div><div class="label" id="m1l">Habitaciones</div><div class="hint">Información compartida</div><div class="metric-ico">🛏️</div></div>
+        <div class="metric-card m-green"><div class="big" id="m2">0</div><div class="label" id="m2l">Disponibles</div><div class="hint">Listas para reservar</div><div class="metric-ico">🚪</div></div>
+        <div class="metric-card m-amber"><div class="big" id="m3">0</div><div class="label" id="m3l">En limpieza</div><div class="hint">Pendientes de liberar</div><div class="metric-ico">🧹</div></div>
+        <div class="metric-card m-red"><div class="big" id="m4">0</div><div class="label" id="m4l">Mantenimiento</div><div class="hint">Fuera de servicio</div><div class="metric-ico">🔧</div></div>
+      </div>
+      <div class="card" style="margin-top:15px">
+        <div class="section-head"><h3>Flujo operativo</h3></div>
+        <div class="info">Disponibilidad → Huésped → Reserva pendiente → Pago/adelanto → Confirmada → Check-in → Ocupada → Check-out → En limpieza → Disponible. Las incidencias técnicas se gestionan desde Mantenimiento.</div>
+      </div>
+    </section>
+
+    <section data-screen="disponibilidad" class="hidden">
+      <div class="card">
+        <div class="section-head"><h3>Consultar disponibilidad</h3></div>
+        <div class="form-grid">
+          <div><label>Fecha ingreso</label><input id="avIn" type="date"></div>
+          <div><label>Fecha salida</label><input id="avOut" type="date"></div>
+          <div><label>Tipo</label><select id="avType"><option value="">Todos</option><option>Simple</option><option>Doble</option><option>Suite</option></select></div>
+          <div><label>Huéspedes</label><input id="avCount" type="number" min="1" value="1"></div>
+        </div>
+        <div class="actions"><button id="btnAvailability" class="btn btn-primary">Consultar</button></div>
+        <div id="availabilityBox" class="scroll" style="margin-top:14px"></div>
+      </div>
+    </section>
+
+    <section data-screen="huespedes" class="hidden">
+      <div class="g2 grid">
+        <div class="card">
+          <h3>Registrar huésped</h3>
+          <label>Documento</label><input id="gDoc">
+          <label>Nombre completo</label><input id="gName">
+          <label>Teléfono</label><input id="gPhone">
+          <label>Correo</label><input id="gEmail" type="email">
+          <div class="actions"><button id="saveGuest" class="btn btn-primary">Guardar huésped</button></div>
+          <div id="guestNotice" class="notice hidden"></div>
+        </div>
+        <div class="card scroll">
+          <div class="section-head"><h3>Huéspedes registrados</h3></div>
+          <table><thead id="guestHead"></thead><tbody id="guestRows"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen="reservas" class="hidden">
+      <div class="card">
+        <div class="section-head"><h3>Reservas</h3><div class="toolbar"><button id="newReservation" class="btn btn-primary">Nueva reserva</button><input id="searchReservation" placeholder="Buscar reserva" style="width:260px"></div></div>
+        <div id="reservationTopNotice" class="notice hidden"></div>
+        <div class="scroll"><table><thead><tr><th>Código</th><th>Huésped</th><th>Habitación</th><th>Ingreso</th><th>Salida</th><th>Vence</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="reservationRows"></tbody></table></div>
+      </div>
+      <div id="reservationFormCard" class="card hidden" style="margin-top:15px">
+        <h3>Registrar reserva</h3>
+        <div class="form-grid">
+          <div><label>Huésped</label><select id="rGuest"></select></div>
+          <div><label>Habitación</label><select id="rRoom"></select></div>
+          <div><label>Fecha ingreso</label><input id="rIn" type="date"></div>
+          <div><label>Fecha salida</label><input id="rOut" type="date"></div>
+          <div><label>Cantidad huéspedes</label><input id="rCount" type="number" min="1" value="1"></div>
+          <div><label>Fecha límite de verificación <span class="muted small">(opcional)</span></label><input id="rExpire" type="date"></div>
+        </div>
+        <div class="info" style="margin-top:12px"><b>Vencimiento demostrativo:</b> si se define una fecha límite y la reserva sigue Pendiente al vencer, el prototipo puede marcarla como Vencida. Este plazo es configurable y no representa una política oficial del hotel.</div>
+        <div class="actions"><button id="saveReservation" class="btn btn-primary">Registrar</button><button id="cancelReservationForm" class="btn btn-outline">Cancelar</button></div>
+        <div id="reservationNotice" class="notice hidden"></div>
+      </div>
+    </section>
+
+    <section data-screen="pagos" class="hidden">
+      <div class="g2 grid">
+        <div class="card">
+          <h3>Registrar pago / adelanto</h3>
+          <label>Reserva</label><select id="payReservation"></select>
+          <div id="paymentCostBox" class="info">Selecciona una reserva para ver el costo.</div>
+          <label>Monto a pagar / adelanto</label><input id="payAmount" type="number" min="1">
+          <label>Método</label><select id="payMethod"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select>
+          <div class="actions"><button id="savePayment" class="btn btn-primary">Registrar pago</button></div>
+          <div id="paymentNotice" class="notice hidden"></div>
+        </div>
+        <div class="card scroll">
+          <div class="section-head">
+            <h3>Pagos y comprobantes</h3>
+            <input id="paymentSearch" placeholder="Buscar por reserva o comprobante" style="width:280px">
+          </div>
+          <table>
+            <thead><tr><th>Reserva</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Comprobante</th><th>Acciones</th></tr></thead>
+            <tbody id="paymentRows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="receiptBox" class="card hidden" style="margin-top:15px"></div>
+    </section>
+
+    <section data-screen="checkin" class="hidden">
+      <div class="card"><h3>Registrar check-in</h3><label>Reserva confirmada</label><select id="checkinReservation"></select><div class="actions"><button id="doCheckin" class="btn btn-primary">Registrar check-in</button></div><div id="checkinNotice" class="notice hidden"></div></div>
+    </section>
+
+    <section data-screen="checkout" class="hidden">
+      <div class="card"><h3>Registrar check-out</h3><label>Reserva en estadía</label><select id="checkoutReservation"></select><div class="actions"><button id="doCheckout" class="btn btn-primary">Registrar check-out</button></div><div id="checkoutNotice" class="notice hidden"></div></div>
+    </section>
+
+    <section data-screen="habitaciones" class="hidden">
+      <div id="adminRoomMetrics" class="summary-strip hidden">
+        <div class="metric-card m-blue"><div class="big" id="roomTotal">0</div><div class="label">Total habitaciones</div><div class="metric-ico">🛏️</div></div>
+        <div class="metric-card m-green"><div class="big" id="roomAvailable">0</div><div class="label">Disponibles</div><div class="metric-ico">🚪</div></div>
+        <div class="metric-card m-amber"><div class="big" id="roomOccupied">0</div><div class="label">Ocupadas / limpieza</div><div class="metric-ico">👥</div></div>
+        <div class="metric-card m-red"><div class="big" id="roomMaint">0</div><div class="label">Mantenimiento</div><div class="metric-ico">🔧</div></div>
+      </div>
+
+      <div id="adminAddRoom" class="card hidden" style="margin-bottom:15px">
+        <div class="section-head"><h3>➕ Agregar habitación</h3><span class="badge">Solo Administrador</span></div>
+        <div class="form-grid cols5">
+          <div><label>Número</label><input id="newRoomNumber" placeholder="Ej. 206"></div>
+          <div><label>Tipo</label><select id="newRoomType"><option>Simple</option><option>Doble</option><option>Suite</option></select></div>
+          <div><label>Capacidad</label><input id="newRoomCapacity" type="number" min="1" value="1"></div>
+          <div><label>Tarifa (S/.)</label><input id="newRoomRate" type="number" min="1"></div>
+          <div><label>Piso</label><input id="newRoomFloor" type="number" min="1" value="1"></div>
+        </div>
+        <div class="actions"><button id="addRoomBtn" class="btn btn-primary">Agregar habitación</button></div>
+        <div id="addRoomNotice" class="notice hidden"></div>
+      </div>
+
+      <div class="card scroll">
+        <div class="section-head"><h3>Habitaciones registradas</h3><div class="toolbar"><input id="roomSearch" placeholder="Buscar por número o tipo" style="width:250px"><select id="roomFilter" style="width:190px"><option value="">Todos los estados</option><option>Disponible</option><option>Ocupada</option><option>En limpieza</option><option>Mantenimiento</option></select></div></div>
+        <div class="info"><b>Reglas:</b> una habitación Ocupada no puede pasar a En limpieza sin check-out. El estado Mantenimiento se activa únicamente cuando Mantenimiento toma una incidencia. Recepción y Limpieza pueden verlo, pero no modificarlo.</div>
+        <table><thead><tr><th>Número</th><th>Tipo</th><th>Capacidad</th><th>Tarifa</th><th>Piso</th><th>Estado</th><th>Acción según rol</th></tr></thead><tbody id="roomRows"></tbody></table>
+      </div>
+    </section>
+
+    <section data-screen="incidencias" class="hidden">
+      <div class="g2 grid">
+        <div class="card">
+          <h3>Reportar incidencia</h3>
+          <div class="info">Recepción, Limpieza y Mantenimiento pueden reportar incidencias. La habitación pasa a Mantenimiento cuando el técnico toma el caso.</div>
+          <label>Habitación</label><select id="incidentRoom"></select>
+          <label>Tipo</label><select id="incidentType"><option>Eléctrica</option><option>Sanitaria</option><option>Cerradura / puerta</option><option>Mobiliario</option><option>Equipamiento</option><option>Otro</option></select>
+          <label>Prioridad</label><select id="incidentPriority"><option>Baja</option><option selected>Media</option><option>Alta</option></select>
+          <label>Descripción</label><input id="incidentDesc">
+          <div class="actions"><button id="reportIncident" class="btn btn-primary">Reportar incidencia</button></div>
+          <div id="incidentNotice" class="notice hidden"></div>
+        </div>
+        <div class="card scroll">
+          <h3>Incidencias reportadas</h3>
+          <table><thead><tr><th>Habitación</th><th>Reportado por</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody id="reportedIncidentRows"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen="mantenimiento" class="hidden">
+      <div class="g2 grid">
+        <div class="card">
+          <h3>Reportar avería técnica</h3>
+          <label>Habitación</label><select id="maintRoom"></select>
+          <label>Descripción</label><input id="maintDesc">
+          <div class="actions"><button id="saveIncident" class="btn btn-primary">Reportar avería</button></div>
+          <div class="warnbox">Mantenimiento no se activa manualmente desde Habitaciones. Debe existir una incidencia y ser tomada por Mantenimiento.</div>
+        </div>
+        <div class="card scroll">
+          <h3>Bandeja de incidencias</h3>
+          <table><thead><tr><th>Habitación</th><th>Descripción</th><th>Reportado por</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="incidentRows"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen="tarifas" class="hidden">
+      <div class="g2 grid">
+        <div class="card scroll"><h3>Tarifas</h3><table><thead><tr><th>Tipo</th><th>Temporada</th><th>Precio</th></tr></thead><tbody id="tariffRows"></tbody></table></div>
+        <div class="card"><h3>Registrar / actualizar tarifa</h3><label>Tipo</label><select id="tariffType"><option>Simple</option><option>Doble</option><option>Suite</option></select><label>Temporada</label><input id="tariffSeason" value="Regular"><label>Precio</label><input id="tariffPrice" type="number"><div class="actions"><button id="saveTariff" class="btn btn-primary">Guardar</button></div></div>
+      </div>
+    </section>
+
+    <section data-screen="reportes" class="hidden"><div class="card"><h3>Reporte general</h3><div id="reportContent"></div><div class="actions"><button id="refreshReport" class="btn btn-primary">Actualizar</button></div></div></section>
+
+    <section data-screen="historial" class="hidden">
+      <div class="card scroll">
+        <div class="section-head">
+          <h3>Historial y auditoría</h3>
+          <div class="toolbar">
+            <input id="historySearch" placeholder="Buscar por reserva, rol o acción" style="width:300px">
+            <button id="evaluateExpirations" class="btn btn-outline">Evaluar vencimientos</button>
+          </div>
+        </div>
+        <div class="info">Registra automáticamente las operaciones relevantes del prototipo: reservas, pagos, comprobantes, check-in, check-out, cambios de habitación, incidencias, mantenimiento y tarifas.</div>
+        <table>
+          <thead><tr><th>Fecha y hora</th><th>Usuario / rol</th><th>Reserva / referencia</th><th>Acción</th></tr></thead>
+          <tbody id="historyRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-screen="reglas" class="hidden">
+      <div class="card scroll">
+        <div class="section-head"><h3>Reglas de negocio aplicadas</h3></div>
+        <div class="info">Matriz académica de trazabilidad: muestra la regla y la parte del prototipo donde se aplica.</div>
+        <table>
+          <thead><tr><th>Código</th><th>Regla</th><th>Aplicación en el prototipo</th></tr></thead>
+          <tbody id="ruleRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section data-screen="usuarios" class="hidden"><div class="card scroll"><h3>Usuarios y roles</h3><table><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead><tbody id="userRows"></tbody></table></div></section>
+  </main>
+</section>
+
+<script>
+(()=>{
+const KEY='hotelCentroHuancayoV12', LEGACY='hotelCentroHuancayoV9', SESSION='hotelCentroHuancayoSession';
+const credentials={admin:{password:'123',role:'Administrador'},recepcion:{password:'123',role:'Recepcionista'},limpieza:{password:'123',role:'Limpieza'},mantenimiento:{password:'123',role:'Mantenimiento'}};
+const permissions={
+ Administrador:['dashboard','disponibilidad','huespedes','reservas','pagos','checkin','checkout','habitaciones','incidencias','mantenimiento','tarifas','reportes','historial','reglas','usuarios'],
+ Recepcionista:['dashboard','disponibilidad','huespedes','reservas','pagos','checkin','checkout','habitaciones','incidencias','historial','reglas'],
+ Limpieza:['dashboard','habitaciones','incidencias','reglas'],
+ Mantenimiento:['dashboard','habitaciones','incidencias','mantenimiento','reglas']
+};
+const defaultState={
+ guests:[
+  {doc:'74125896',name:'Ana Torres',phone:'999111222',email:'ana@mail.com'},
+  {doc:'72885544',name:'Carlos Ruiz',phone:'999333444',email:'carlos@mail.com'}
+ ],
+ rooms:[
+  {number:'201',type:'Doble',status:'Disponible',capacity:2,rate:160,floor:2,active:true},
+  {number:'202',type:'Simple',status:'Disponible',capacity:1,rate:120,floor:2,active:true},
+  {number:'203',type:'Doble',status:'Disponible',capacity:2,rate:160,floor:2,active:true},
+  {number:'204',type:'Suite',status:'Disponible',capacity:3,rate:230,floor:2,active:true},
+  {number:'205',type:'Simple',status:'Disponible',capacity:1,rate:120,floor:2,active:true},
+  {number:'305',type:'Suite',status:'Disponible',capacity:3,rate:230,floor:3,active:true}
+ ],
+ reservations:[],
+ payments:[],
+ receipts:[],
+ incidents:[],
+ history:[],
+ tariffs:[{type:'Simple',season:'Regular',price:120},{type:'Doble',season:'Regular',price:160},{type:'Suite',season:'Regular',price:230}],
+ users:[{user:'admin',role:'Administrador',status:'Activo'},{user:'recepcion',role:'Recepcionista',status:'Activo'},{user:'limpieza',role:'Limpieza',status:'Activo'},{user:'mantenimiento',role:'Mantenimiento',status:'Activo'}]
+};
+let state=loadState(), currentRole=sessionStorage.getItem(SESSION)||'';
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function normalize(s){
+ s.guests=s.guests||[];s.rooms=s.rooms||[];s.reservations=s.reservations||[];s.payments=s.payments||[];s.receipts=s.receipts||[];s.incidents=s.incidents||[];s.history=s.history||[];s.tariffs=s.tariffs||clone(defaultState.tariffs);s.users=s.users||clone(defaultState.users);
+ s.rooms=s.rooms.map(r=>({...r,capacity:r.capacity||1,rate:Number(r.rate||0),floor:r.floor||1,active:r.active!==false}));
+ s.incidents=s.incidents.map(i=>({...i,status:i.status==='Abierta'?'Pendiente':i.status,reportedBy:i.reportedBy||'Sistema',priority:i.priority||'Media',type:i.type||'Otro'}));
+ return s;
+}
+function loadState(){try{const x=localStorage.getItem(KEY);if(x)return normalize(JSON.parse(x));const l=localStorage.getItem(LEGACY);if(l){const s=normalize(JSON.parse(l));localStorage.setItem(KEY,JSON.stringify(s));return s}return clone(defaultState)}catch(e){return clone(defaultState)}}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state))}
+function reload(){state=loadState()}
+function can(page){return permissions[currentRole]?.includes(page)}
+function today(){return new Date().toISOString().slice(0,10)}
+function guestName(doc){return state.guests.find(g=>g.doc===doc)?.name||doc}
+function roomObj(n){return state.rooms.find(r=>r.number===n)}
+function reservation(code){return state.reservations.find(r=>r.code===code)}
+function gen(prefix){return prefix+'-'+Math.floor(1000+Math.random()*9000)}
+function nowText(){return new Date().toLocaleString('es-PE')}
+function logAction(action,ref='—'){
+ state.history.unshift({date:nowText(),user:currentRole||'Sistema',ref,action});
+ if(state.history.length>300)state.history=state.history.slice(0,300);
+}
+function expirePendingReservations(){
+ const t=today();let changed=0;
+ state.reservations.forEach(r=>{
+   if(r.status==='Pendiente'&&r.expires&&r.expires<t){
+     r.status='Vencida';logAction('RN09: reserva vencida por superar la fecha límite de verificación',r.code);changed++;
+   }
+ });
+ if(changed)saveState();
+ return changed;
+}
+const businessRules=[
+ ['RN01','Toda reserva debe estar asociada a un huésped identificado.','Registrar reserva exige seleccionar un huésped registrado.'],
+ ['RN02','Solo podrá reservarse una habitación disponible durante todo el periodo solicitado.','Disponibilidad y registro validan la habitación antes de guardar.'],
+ ['RN03','Una habitación no podrá tener reservas activas cuyas fechas se superpongan.','La función de solapamiento bloquea periodos incompatibles.'],
+ ['RN04','La fecha de salida debe ser posterior a la fecha de ingreso.','Los formularios validan el rango de fechas.'],
+ ['RN05','La cantidad de huéspedes no podrá superar la capacidad de la habitación.','Disponibilidad filtra por capacidad y la reserva conserva la cantidad solicitada.'],
+ ['RN06','La tarifa aplicable será la vigente al momento de registrar la reserva.','La habitación muestra su tarifa vigente y el pago usa el costo calculado.'],
+ ['RN07','Para confirmar una reserva deberá registrarse el adelanto establecido por el hotel.','La reserva nace Pendiente y se confirma cuando se registra un pago/adelanto verificado.'],
+ ['RN08','Una reserva permanecerá Pendiente hasta verificar el adelanto.','Registrar reserva crea estado Pendiente; registrar pago cambia a Confirmada.'],
+ ['RN09','Una reserva Pendiente puede vencer si supera el plazo configurado.','Fecha límite opcional y acción Evaluar vencimientos.'],
+ ['RN10','Toda modificación de fechas estará sujeta a nueva disponibilidad.','Regla documentada para modificaciones; el prototipo conserva la validación de disponibilidad.'],
+ ['RN11','Las cancelaciones se atienden conforme a la política vigente.','Cancelar cambia el estado y conserva el registro.'],
+ ['RN12','El check-in se realiza desde el horario definido por el hotel, salvo autorización.','El módulo Check-in controla que exista una reserva Confirmada y habitación operativa.'],
+ ['RN13','El check-out se realiza según el horario definido por el hotel, salvo autorización.','El módulo Check-out finaliza la estadía y envía la habitación a limpieza.'],
+ ['RN14','Para check-in, el huésped debe estar identificado.','Toda reserva está vinculada a un huésped registrado.'],
+ ['RN15','Una habitación en mantenimiento o limpieza no podrá asignarse.','Registrar reserva solo lista habitaciones en estado Disponible.'],
+ ['RN16','Todo adelanto o pago debe quedar asociado a una reserva o estadía.','Cada pago almacena el código de reserva.'],
+ ['RN17','Todo pago debe generar el comprobante correspondiente.','Pagos permiten emitir, visualizar y descargar comprobantes.'],
+ ['RN18','Solo el Administrador puede crear o modificar tarifas.','El módulo Tarifas está restringido al rol Administrador.'],
+ ['RN19','Una reserva con pagos registrados no se elimina; únicamente puede cancelarse.','No existe eliminación física de reservas.'],
+ ['RN20','Toda cancelación o modificación debe conservarse en el historial.','Historial y auditoría registra operaciones relevantes.'],
+ ['RN21','El acceso a cada funcionalidad está restringido según rol.','Permisos diferenciados para Administrador, Recepcionista, Limpieza y Mantenimiento.'],
+ ['RN22','Una habitación ocupada no puede quedar Disponible antes del check-out.','Limpieza no puede modificar una habitación Ocupada; check-out la pasa a En limpieza.']
+];
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function nightsBetween(a,b){if(!a||!b)return 0;return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000))}
+function costOf(r){const room=roomObj(r?.room),n=nightsBetween(r?.checkin,r?.checkout),rate=Number(room?.rate||0);return {room,nights:n,rate,total:n*rate}}
+function hasOverlap(room,from,to,exclude=''){return state.reservations.some(r=>r.code!==exclude&&r.room===room&&!['Cancelada','Finalizada','Vencida'].includes(r.status)&&from<r.checkout&&to>r.checkin)}
+function stateHtml(s){const c=s==='Disponible'?'s-disponible':s==='Ocupada'?'s-ocupada':s==='En limpieza'?'s-limpieza':s==='Mantenimiento'?'s-mantenimiento':s==='Pendiente'?'s-pendiente':s==='Confirmada'?'s-confirmada':s==='En estadía'?'s-estadia':s==='Finalizada'?'s-finalizada':s==='Vencida'?'s-cancelada':'s-cancelada';return `<span class="state ${c}"><span class="dot"></span>${s}</span>`}
+
+const titles={dashboard:['Panel principal','Gestión operativa y administrativa'],disponibilidad:['Disponibilidad','Consulta de habitaciones para fechas específicas'],huespedes:['Huéspedes','Registro y consulta de huéspedes'],reservas:['Gestión de reservas','Ciclo de reservas del hotel'],pagos:['Pagos','Pagos, adelantos y comprobantes'],checkin:['Check-in','Ingreso del huésped'],checkout:['Check-out','Salida del huésped'],habitaciones:['Gestión de Habitaciones','Administración de cuartos y estados'],incidencias:['Reportar incidencia','Registro de fallas detectadas'],mantenimiento:['Mantenimiento','Atención técnica de incidencias'],tarifas:['Tarifas','Gestión administrativa de precios'],reportes:['Reportes','Resumen operativo'],historial:['Historial y auditoría','Trazabilidad de operaciones'],reglas:['Reglas aplicadas','Trazabilidad de reglas de negocio'],usuarios:['Usuarios','Roles y accesos']};
+
+function showPage(page){
+ reload();if(!can(page))page='dashboard';
+ document.querySelectorAll('[data-screen]').forEach(x=>x.classList.toggle('hidden',x.dataset.screen!==page));
+ document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
+ pageTitle.textContent=titles[page][0];pageSubtitle.textContent=titles[page][1];
+ renderAll();
+}
+function applyRoleUI(){
+ roleBadge.textContent=currentRole;
+ document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('hidden',!can(b.dataset.page)));
+ adminAddRoom.classList.toggle('hidden',currentRole!=='Administrador');
+ adminRoomMetrics.classList.toggle('hidden',currentRole!=='Administrador');
+}
+function renderDashboard(){
+ const total=state.rooms.filter(r=>r.active).length,available=state.rooms.filter(r=>r.active&&r.status==='Disponible').length,clean=state.rooms.filter(r=>r.active&&r.status==='En limpieza').length,maint=state.rooms.filter(r=>r.active&&r.status==='Mantenimiento').length;
+ let vals;
+ if(currentRole==='Administrador')vals=[[total,'Habitaciones'],[available,'Disponibles'],[clean,'En limpieza'],[maint,'Mantenimiento']];
+ else if(currentRole==='Recepcionista') vals=[[state.reservations.filter(r=>!['Finalizada','Cancelada'].includes(r.status)).length,'Reservas activas'],[available,'Disponibles'],[state.reservations.filter(r=>r.status==='Pendiente').length,'Pendientes'],[maint,'Mantenimiento']];
+ else if(currentRole==='Limpieza') vals=[[clean,'En limpieza'],[available,'Disponibles'],[state.rooms.filter(r=>r.status==='Ocupada').length,'Ocupadas'],[maint,'Mantenimiento']];
+ else vals=[[state.incidents.filter(i=>i.status==='Pendiente').length,'Incidencias pendientes'],[maint,'Mantenimiento'],[state.incidents.filter(i=>i.status==='En atención').length,'En atención'],[clean,'En limpieza']];
+ [[m1,m1l],[m2,m2l],[m3,m3l],[m4,m4l]].forEach((pair,i)=>{pair[0].textContent=vals[i][0];pair[1].textContent=vals[i][1]})
+}
+function renderGuests(){
+ guestHead.innerHTML=currentRole==='Administrador'?'<tr><th>Documento</th><th>Nombre</th><th>Teléfono</th><th>Correo</th></tr>':'<tr><th>Documento</th><th>Nombre</th><th>Teléfono</th></tr>';
+ guestRows.innerHTML=state.guests.map(g=>currentRole==='Administrador'?`<tr><td>${esc(g.doc)}</td><td>${esc(g.name)}</td><td>${esc(g.phone)}</td><td>${esc(g.email)}</td></tr>`:`<tr><td>${esc(g.doc)}</td><td>${esc(g.name)}</td><td>${esc(g.phone)}</td></tr>`).join('');
+ rGuest.innerHTML=state.guests.map(g=>`<option value="${esc(g.doc)}">${esc(g.name)} · ${esc(g.doc)}</option>`).join('');
+}
+function renderReservationRoomOptions(){rRoom.innerHTML=state.rooms.filter(r=>r.active&&r.status==='Disponible').map(r=>`<option value="${r.number}">${r.number} · ${r.type} · S/ ${r.rate}</option>`).join('')}
+function renderReservations(){
+ const q=(searchReservation.value||'').toLowerCase();
+ reservationRows.innerHTML=state.reservations.filter(r=>(r.code+' '+guestName(r.guestDoc)).toLowerCase().includes(q)).map(r=>`<tr><td>${r.code}</td><td>${esc(guestName(r.guestDoc))}</td><td>${r.room}</td><td>${r.checkin}</td><td>${r.checkout}</td><td>${r.expires||'—'}</td><td>${stateHtml(r.status)}</td><td><div class="room-actions">${['Administrador','Recepcionista'].includes(currentRole)&&r.status==='Pendiente'?`<button class="btn btn-outline mini payQuick" data-code="${r.code}">Registrar pago</button>`:''}${['Administrador','Recepcionista'].includes(currentRole)&&['Pendiente','Confirmada'].includes(r.status)?`<button class="btn btn-danger mini cancelRes" data-code="${r.code}">Cancelar</button>`:''}${r.status==='Confirmada'?'<span class="muted small">Siguiente: Check-in</span>':''}${r.status==='En estadía'?'<span class="muted small">Siguiente: Check-out</span>':''}</div></td></tr>`).join('');
+ document.querySelectorAll('.payQuick').forEach(b=>b.onclick=()=>{showPage('pagos');payReservation.value=b.dataset.code;updatePaymentCostBox()});
+ document.querySelectorAll('.cancelRes').forEach(b=>b.onclick=()=>{const r=reservation(b.dataset.code);if(r){r.status='Cancelada';logAction('RN11/RN20: reserva cancelada; registro conservado',r.code);saveState();renderAll()}});
+}
+function updatePaymentCostBox(){
+ const r=reservation(payReservation.value);if(!r){paymentCostBox.textContent='Selecciona una reserva para ver el costo.';return}
+ const c=costOf(r);paymentCostBox.innerHTML=`<b>Habitación:</b> ${r.room} - ${c.room?.type||''}<br><b>Tarifa por noche:</b> S/ ${c.rate.toFixed(2)}<br><b>Noches:</b> ${c.nights}<br><b>Costo total:</b> S/ ${c.total.toFixed(2)}`;
+}
+function renderPayments(){
+ const cur=payReservation.value;
+ payReservation.innerHTML=state.reservations.filter(r=>['Pendiente','Confirmada','En estadía'].includes(r.status)).map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · ${r.status}</option>`).join('');
+ if(cur&&[...payReservation.options].some(o=>o.value===cur))payReservation.value=cur;
+
+ const q=(document.getElementById('paymentSearch')?.value||'').toLowerCase();
+ paymentRows.innerHTML=state.payments.filter(p=>{
+   const rec=state.receipts.find(x=>x.paymentId===p.id);
+   return (p.reservation+' '+(rec?.id||'')).toLowerCase().includes(q);
+ }).map(p=>{
+   const rec=state.receipts.find(x=>x.paymentId===p.id);
+   return `<tr>
+     <td>${p.reservation}</td>
+     <td>S/ ${Number(p.amount).toFixed(2)}</td>
+     <td>${p.method}</td>
+     <td>${p.date}</td>
+     <td>${rec?`<span class="state s-confirmada"><span class="dot"></span>${rec.id} · Emitido</span>`:`<span class="state s-pendiente"><span class="dot"></span>Pendiente</span>`}</td>
+     <td><div class="room-actions">
+       ${rec?`<button class="btn btn-success mini viewReceipt" data-id="${rec.id}">Ver</button>
+              <button class="btn btn-outline mini downloadReceipt" data-id="${rec.id}">Descargar PDF</button>`:
+             `<button class="btn btn-primary mini emitReceipt" data-pay="${p.id}">Emitir</button>`}
+     </div></td>
+   </tr>`;
+ }).join('');
+
+ document.querySelectorAll('.emitReceipt').forEach(b=>b.onclick=()=>emitReceipt(b.dataset.pay));
+ document.querySelectorAll('.viewReceipt').forEach(b=>b.onclick=()=>showReceipt(b.dataset.id));
+ document.querySelectorAll('.downloadReceipt').forEach(b=>b.onclick=()=>downloadReceiptPdf(b.dataset.id));
+ updatePaymentCostBox();
+}
+function emitReceipt(paymentId){
+ const p=state.payments.find(x=>x.id===paymentId);if(!p)return;const existing=state.receipts.find(x=>x.paymentId===p.id);if(existing){showReceipt(existing.id);return}
+ const rec={id:'CMP-'+String(state.receipts.length+1).padStart(4,'0'),paymentId:p.id,reservation:p.reservation,date:today(),amount:p.amount,method:p.method};
+ state.receipts.push(rec);logAction('RN17: comprobante '+rec.id+' emitido por pago '+p.id,rec.reservation);saveState();renderAll();showReceipt(rec.id)
+}
+function fauxQR(seed){
+ let n=0;for(const ch of String(seed))n=(n*31+ch.charCodeAt(0))>>>0;
+ let html='';for(let i=0;i<169;i++){n=(1664525*n+1013904223)>>>0;html+=`<span class="${(n>>>31)||i<3||i%13<2?'on':''}"></span>`}return html;
+}
+window.showReceipt=function(id){
+ const rec=state.receipts.find(x=>x.id===id),p=state.payments.find(x=>x.id===rec?.paymentId),res=reservation(rec?.reservation);
+ if(!rec||!p||!res)return;
+ const g=state.guests.find(x=>x.doc===res.guestDoc),c=costOf(res);
+ const subtotal=Number(rec.amount),igv=subtotal*0.18,total=subtotal;
+ receiptBox.classList.remove('hidden');
+ receiptBox.innerHTML=`<div class="receipt-doc">
+   <div class="receipt-top">
+     <div class="receipt-brand">
+       <div class="hotel-word">HOTEL</div>
+       <h2>CENTRO HUANCAYO</h2>
+       <div class="muted small">Tu estadía, nuestra prioridad</div>
+     </div>
+     <div class="receipt-meta">
+       <b>Hotel Centro Huancayo</b><br>
+       Jr. Loreto 452, Huancayo, Junín<br>
+       Tel.: (064) 000000<br>
+       contacto@hotelcentrohuancayo.pe
+     </div>
+     <div style="display:flex;gap:12px;align-items:flex-start">
+       <div class="qrbox">${fauxQR(rec.id)}</div>
+       <div class="receipt-box">
+         <b>COMPROBANTE DE PAGO</b><br>
+         Serie: CMP<br>
+         N° ${rec.id.replace('CMP-','')}<br><br>
+         Fecha: ${rec.date}
+       </div>
+     </div>
+   </div>
+
+   <div class="receipt-body">
+     <div class="receipt-col">
+       <h4>Datos del huésped</h4>
+       <div class="kv">
+         <b>Nombre</b><span>${esc(g?.name||'')}</span>
+         <b>Documento</b><span>${esc(g?.doc||'')}</span>
+         <b>Teléfono</b><span>${esc(g?.phone||'')}</span>
+       </div>
+     </div>
+     <div class="receipt-col">
+       <h4>Datos de la reserva</h4>
+       <div class="kv">
+         <b>Reserva</b><span>${res.code}</span>
+         <b>Habitación</b><span>${res.room} - ${c.room?.type||''}</span>
+         <b>Check-in</b><span>${res.checkin}</span>
+         <b>Check-out</b><span>${res.checkout}</span>
+         <b>Noches</b><span>${c.nights}</span>
+         <b>Huéspedes</b><span>${res.count}</span>
+       </div>
+     </div>
+     <div class="receipt-col">
+       <h4>Resumen de pago</h4>
+       <div class="kv">
+         <b>Tarifa/noche</b><span>S/ ${c.rate.toFixed(2)}</span>
+         <b>Costo reserva</b><span>S/ ${c.total.toFixed(2)}</span>
+         <b>Pago registrado</b><span>S/ ${subtotal.toFixed(2)}</span>
+         <b>Método</b><span>${p.method}</span>
+       </div>
+       <div class="receipt-total"><span>TOTAL PAGADO</span><span>S/ ${total.toFixed(2)}</span></div>
+     </div>
+   </div>
+
+   <div class="receipt-footer">
+     ¡Gracias por su preferencia! · Hotel Centro Huancayo · Comprobante generado por el sistema
+   </div>
+
+   <div id="receiptActions" class="actions" style="justify-content:flex-end;margin-top:16px">
+     <button class="btn btn-outline" onclick="window.print()">Imprimir / Guardar PDF</button>
+     <button class="btn btn-primary" onclick="downloadReceiptPdf('${rec.id}')">Descargar PDF</button>
+   </div>
+ </div>`;
+ receiptBox.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function pdfEscape(s){return String(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[^\x20-\x7E]/g,c=>({'á':'a','é':'e','í':'i','ó':'o','ú':'u','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','ñ':'n','Ñ':'N','°':'o'}[c]||'?'))}
+window.downloadReceiptPdf=function(id){
+ const rec=state.receipts.find(x=>x.id===id),p=state.payments.find(x=>x.id===rec?.paymentId),res=reservation(rec?.reservation);
+ if(!rec||!p||!res)return;
+ const g=state.guests.find(x=>x.doc===res.guestDoc),c=costOf(res);
+
+ function escPdf(s){return String(s??'').replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[^\x20-\x7E]/g,ch=>({'á':'a','é':'e','í':'i','ó':'o','ú':'u','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','ñ':'n','Ñ':'N','°':'o'}[ch]||''))}
+ function t(x,y,size,txt,bold=false){
+   return `BT /F${bold?2:1} ${size} Tf ${x} ${y} Td (${escPdf(txt)}) Tj ET`;
+ }
+ function line(x1,y1,x2,y2,w=.6){return `${w} w ${x1} ${y1} m ${x2} ${y2} l S`}
+ function rect(x,y,w,h){return `${x} ${y} ${w} ${h} re S`}
+ function fillRect(x,y,w,h,g=.94){return `q ${g} g ${x} ${y} ${w} ${h} re f Q`}
+
+ const cmds=[];
+ cmds.push('0 G');
+ // Header adjusted to avoid overlap
+ cmds.push(t(42,800,11,'HOTEL CENTRO',true));
+ cmds.push(t(42,778,20,'HUANCAYO',true));
+ cmds.push(t(42,760,9,'Tu estadia, nuestra prioridad'));
+
+ cmds.push(t(260,804,10,'Hotel Centro Huancayo',true));
+ cmds.push(t(260,790,8.5,'Jr. Loreto 452, Huancayo, Junin'));
+ cmds.push(t(260,776,8.5,'Tel.: (064) 000000'));
+ cmds.push(t(260,762,8.5,'contacto@hotelcentrohuancayo.pe'));
+
+ cmds.push(fillRect(435,752,115,66,.92));
+ cmds.push(t(447,792,10,'COMPROBANTE DE PAGO',true));
+ cmds.push(t(447,776,9,'Serie: CMP'));
+ cmds.push(t(447,760,9,'No. '+rec.id.replace('CMP-','')));
+ cmds.push(t(447,744,9,'Fecha: '+rec.date));
+ cmds.push(line(42,734,553,734,1.1));
+
+ // Body boxes
+ cmds.push(rect(42,485,165,220));
+ cmds.push(rect(207,485,185,220));
+ cmds.push(rect(392,485,161,220));
+
+ cmds.push(t(52,682,10,'DATOS DEL HUESPED',true));
+ cmds.push(t(52,660,9,'Nombre',true)); cmds.push(t(108,660,9,g?.name||''));
+ cmds.push(t(52,642,9,'Documento',true)); cmds.push(t(108,642,9,g?.doc||''));
+ cmds.push(t(52,624,9,'Telefono',true)); cmds.push(t(108,624,9,g?.phone||''));
+
+ cmds.push(t(217,682,10,'DATOS DE LA RESERVA',true));
+ cmds.push(t(217,660,9,'Reserva',true)); cmds.push(t(290,660,9,res.code));
+ cmds.push(t(217,642,9,'Habitacion',true)); cmds.push(t(290,642,9,res.room+' - '+(c.room?.type||'')));
+ cmds.push(t(217,624,9,'Check-in',true)); cmds.push(t(290,624,9,res.checkin));
+ cmds.push(t(217,606,9,'Check-out',true)); cmds.push(t(290,606,9,res.checkout));
+ cmds.push(t(217,588,9,'Noches',true)); cmds.push(t(290,588,9,String(c.nights)));
+ cmds.push(t(217,570,9,'Huespedes',true)); cmds.push(t(290,570,9,String(res.count)));
+
+ cmds.push(t(402,682,10,'RESUMEN DE PAGO',true));
+ cmds.push(t(402,660,8.5,'Tarifa/noche',true)); cmds.push(t(500,660,9,'S/ '+c.rate.toFixed(2)));
+ cmds.push(t(402,642,8.5,'Costo reserva',true)); cmds.push(t(500,642,9,'S/ '+c.total.toFixed(2)));
+ cmds.push(t(402,624,8.5,'Pago registrado',true)); cmds.push(t(500,624,9,'S/ '+Number(rec.amount).toFixed(2)));
+ cmds.push(t(402,606,8.5,'Metodo',true)); cmds.push(t(500,606,9,p.method));
+
+ cmds.push(fillRect(402,536,141,38,.90));
+ cmds.push(t(412,550,10,'TOTAL PAGADO',true));
+ cmds.push(t(500,550,10,'S/ '+Number(rec.amount).toFixed(2),true));
+
+ cmds.push(line(42,455,553,455,.8));
+ cmds.push(t(175,435,9,'Gracias por su preferencia - Hotel Centro Huancayo'));
+ cmds.push(t(220,421,8,'Comprobante generado por el sistema'));
+
+ const stream=cmds.join('\n');
+ const objs={};
+ objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+ objs[2]='<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
+ objs[3]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>';
+ objs[4]=`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+ objs[5]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+ objs[6]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+
+ let pdf='%PDF-1.4\n',offsets=[0];
+ for(let i=1;i<=6;i++){offsets[i]=pdf.length;pdf+=`${i} 0 obj\n${objs[i]}\nendobj\n`}
+ const xref=pdf.length;pdf+='xref\n0 7\n0000000000 65535 f \n';
+ for(let i=1;i<=6;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+ pdf+=`trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+
+ const blob=new Blob([pdf],{type:'application/pdf'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download=`${rec.id}_${res.code}.pdf`;
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function renderCheckin(){checkinReservation.innerHTML=state.reservations.filter(r=>r.status==='Confirmada').map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · Hab. ${r.room}</option>`).join('')}
+function renderCheckout(){checkoutReservation.innerHTML=state.reservations.filter(r=>r.status==='En estadía').map(r=>`<option value="${r.code}">${r.code} · ${esc(guestName(r.guestDoc))} · Hab. ${r.room}</option>`).join('')}
+function renderRooms(){
+ const q=(roomSearch.value||'').toLowerCase(),f=roomFilter.value;
+ const list=state.rooms.filter(r=>r.active&&(r.number+' '+r.type).toLowerCase().includes(q)&&(!f||r.status===f));
+ roomRows.innerHTML=list.map(r=>{
+   let action='<span class="muted">Solo consulta</span>';
+   if(currentRole==='Administrador'){
+     if(r.status==='Mantenimiento') action='<span class="muted">Gestionar desde Mantenimiento</span>';
+     else action=`<select class="roomState" data-room="${r.number}">${['Disponible','Ocupada','En limpieza'].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+   }else if(currentRole==='Limpieza'){
+     if(r.status==='Mantenimiento') action='<span class="muted">Bloqueado: en mantenimiento</span>';
+     else if(r.status==='Ocupada') action='<span class="muted">Bloqueado: falta check-out</span>';
+     else action=`<select class="roomState" data-room="${r.number}">${[r.status,'En limpieza','Disponible'].filter((v,i,a)=>a.indexOf(v)===i).map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+   }else if(currentRole==='Mantenimiento') action='<span class="muted">Solo consulta · gestionar incidencia</span>';
+   return `<tr><td><b>${r.number}</b></td><td>${r.type}</td><td>${r.capacity}</td><td>S/ ${Number(r.rate).toFixed(2)}</td><td>${r.floor}</td><td>${stateHtml(r.status)}</td><td>${action}</td></tr>`
+ }).join('');
+ document.querySelectorAll('.roomState').forEach(s=>s.onchange=()=>{const r=roomObj(s.dataset.room),next=s.value;if(currentRole==='Limpieza'&&r.status==='Mantenimiento'){renderAll();return}if(currentRole==='Limpieza'&&r.status==='Ocupada'){renderAll();return}const prev=r.status;r.status=next;logAction('Estado de habitación '+r.number+': '+prev+' → '+next,'Hab. '+r.number);saveState();renderAll()});
+ roomTotal.textContent=state.rooms.filter(r=>r.active).length;roomAvailable.textContent=state.rooms.filter(r=>r.active&&r.status==='Disponible').length;roomOccupied.textContent=state.rooms.filter(r=>r.active&&['Ocupada','En limpieza'].includes(r.status)).length;roomMaint.textContent=state.rooms.filter(r=>r.active&&r.status==='Mantenimiento').length;
+}
+function renderIncidents(){
+ incidentRoom.innerHTML=state.rooms.filter(r=>r.active).map(r=>`<option value="${r.number}">${r.number} · ${r.type} · ${r.status}</option>`).join('');
+ reportedIncidentRows.innerHTML=state.incidents.slice().reverse().map(i=>`<tr><td>${i.room}</td><td>${esc(i.reportedBy)}</td><td>${i.priority}</td><td>${stateHtml(i.status)}</td></tr>`).join('');
+ maintRoom.innerHTML=state.rooms.filter(r=>r.active).map(r=>`<option value="${r.number}">${r.number} · ${r.type} · ${r.status}</option>`).join('');
+ incidentRows.innerHTML=state.incidents.map(i=>{let a='';if(['Administrador','Mantenimiento'].includes(currentRole)){if(i.status==='Pendiente')a=`<button class="btn btn-primary mini takeIncident" data-id="${i.id}">Atender</button>`;else if(i.status==='En atención')a=`<button class="btn btn-success mini closeIncident" data-id="${i.id}">Finalizar</button>`;else a='<span class="muted">Finalizada</span>'}return `<tr><td>${i.room}</td><td>${esc(i.desc)}</td><td>${esc(i.reportedBy)}</td><td>${stateHtml(i.status)}</td><td>${a}</td></tr>`}).join('');
+ document.querySelectorAll('.takeIncident').forEach(b=>b.onclick=()=>{const i=state.incidents.find(x=>x.id===b.dataset.id),r=roomObj(i.room);if(r?.status==='Ocupada'){alert('La habitación está ocupada. Debe gestionarse primero la estadía/check-out o reubicación.');return}i.status='En atención';if(r)r.status='Mantenimiento';logAction('Incidencia '+i.id+' tomada; habitación '+i.room+' pasó a Mantenimiento',i.id);saveState();renderAll()});
+ document.querySelectorAll('.closeIncident').forEach(b=>b.onclick=()=>{const i=state.incidents.find(x=>x.id===b.dataset.id),r=roomObj(i.room);i.status='Cerrada';if(r)r.status='En limpieza';logAction('Incidencia '+i.id+' finalizada; habitación '+i.room+' pasó a En limpieza',i.id);saveState();renderAll()})
+}
+function renderTariffs(){tariffRows.innerHTML=state.tariffs.map(t=>`<tr><td>${t.type}</td><td>${t.season}</td><td>S/ ${Number(t.price).toFixed(2)}</td></tr>`).join('')}
+function renderReports(){reportContent.innerHTML=`<p>Habitaciones: <b>${state.rooms.filter(r=>r.active).length}</b></p><p>Reservas activas: <b>${state.reservations.filter(r=>!['Finalizada','Cancelada','Vencida'].includes(r.status)).length}</b></p><p>Pagos registrados: <b>S/ ${state.payments.reduce((a,p)=>a+Number(p.amount||0),0).toFixed(2)}</b></p><p>Incidencias pendientes: <b>${state.incidents.filter(i=>i.status==='Pendiente').length}</b></p>`}
+function renderHistory(){
+ const q=(historySearch?.value||'').toLowerCase();
+ historyRows.innerHTML=state.history.filter(h=>(`${h.date} ${h.user} ${h.ref} ${h.action}`).toLowerCase().includes(q)).map(h=>`<tr><td>${esc(h.date)}</td><td>${esc(h.user)}</td><td>${esc(h.ref||'—')}</td><td>${esc(h.action)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Aún no hay operaciones registradas.</td></tr>';
+}
+function renderRules(){ruleRows.innerHTML=businessRules.map(r=>`<tr><td><b>${r[0]}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}
+function renderUsers(){userRows.innerHTML=state.users.map(u=>`<tr><td>${u.user}</td><td>${u.role}</td><td>${u.status}</td></tr>`).join('')}
+function renderAll(){expirePendingReservations();applyRoleUI();renderDashboard();renderGuests();renderReservationRoomOptions();renderReservations();renderPayments();renderCheckin();renderCheckout();renderRooms();renderIncidents();renderTariffs();renderReports();renderHistory();renderRules();renderUsers()}
+
+loginForm.onsubmit=e=>{e.preventDefault();const u=loginUser.value.trim(),a=credentials[u];if(a&&a.password===loginPass.value){currentRole=a.role;sessionStorage.setItem(SESSION,currentRole);loginError.classList.add('hidden');loginView.classList.add('hidden');appView.classList.remove('hidden');showPage('dashboard')}else loginError.classList.remove('hidden')};
+logoutBtn.onclick=()=>{sessionStorage.removeItem(SESSION);currentRole='';appView.classList.add('hidden');loginView.classList.remove('hidden');loginForm.reset()};
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+
+btnAvailability.onclick=()=>{
+ const from=avIn.value,to=avOut.value,type=avType.value,count=Number(avCount.value||1);if(!from||!to||to<=from){availabilityBox.innerHTML='<div class="warnbox">Verifica las fechas.</div>';return}
+ const rows=state.rooms.filter(r=>r.active&&r.status!=='Mantenimiento'&&r.capacity>=count&&(!type||r.type===type)&&!hasOverlap(r.number,from,to));
+ availabilityBox.innerHTML=rows.length?`<table><thead><tr><th>Habitación</th><th>Tipo</th><th>Capacidad</th><th>Tarifa</th><th>Estado actual</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.number}</td><td>${r.type}</td><td>${r.capacity}</td><td>S/ ${r.rate}</td><td>${stateHtml(r.status)}</td></tr>`).join('')}</tbody></table>`:'<div class="warnbox">No hay habitaciones disponibles con esos criterios.</div>'
+};
+saveGuest.onclick=()=>{
+ const doc=gDoc.value.trim(),name=gName.value.trim();if(!doc||!name)return;
+ let g=state.guests.find(x=>x.doc===doc);if(g){g.name=name;g.phone=gPhone.value.trim();g.email=gEmail.value.trim();logAction('Datos de huésped actualizados',doc)}else{state.guests.push({doc,name,phone:gPhone.value.trim(),email:gEmail.value.trim()});logAction('Huésped registrado',doc)}
+ saveState();guestNotice.textContent='Huésped guardado correctamente.';guestNotice.classList.remove('hidden');gDoc.value='';gName.value='';gPhone.value='';gEmail.value='';renderAll();setTimeout(()=>guestNotice.classList.add('hidden'),1800)
+};
+newReservation.onclick=()=>{reservationFormCard.classList.remove('hidden');reservationNotice.classList.add('hidden')};cancelReservationForm.onclick=()=>reservationFormCard.classList.add('hidden');
+saveReservation.onclick=()=>{
+ const gd=rGuest.value,room=rRoom.value,ci=rIn.value,co=rOut.value,count=Number(rCount.value||1),expires=rExpire.value||'',ro=roomObj(room);
+ if(!gd||!room||!ci||!co||co<=ci){reservationNotice.textContent='Completa correctamente los datos.';reservationNotice.classList.remove('hidden');return}
+ if(!ro||ro.status!=='Disponible'||hasOverlap(room,ci,co)){reservationNotice.textContent='La habitación no está disponible para registrar la reserva.';reservationNotice.classList.remove('hidden');return}
+ const code=gen('RES');
+ state.reservations.push({code,guestDoc:gd,room,checkin:ci,checkout:co,count,status:'Pendiente',expires});
+ logAction(expires?'RN08: reserva registrada Pendiente con fecha límite de verificación '+expires:'RN08: reserva registrada Pendiente de verificación',code);
+ saveState();
+
+ reservationTopNotice.innerHTML=`<b>Reserva registrada.</b> ${code} · Pendiente`;
+ reservationTopNotice.classList.remove('hidden');
+
+ // Limpiar completamente el formulario después de registrar.
+ rGuest.selectedIndex=-1;
+ rRoom.selectedIndex=-1;
+ rIn.value='';
+ rOut.value='';
+ rCount.value='1';
+ rExpire.value='';
+ reservationNotice.classList.add('hidden');
+ reservationFormCard.classList.add('hidden');
+
+ renderAll();
+
+ // Mantener la confirmación visible unos segundos.
+ setTimeout(()=>reservationTopNotice.classList.add('hidden'),3000);
+};
+searchReservation.oninput=renderReservations;payReservation.onchange=updatePaymentCostBox;
+paymentSearch.oninput=renderPayments;
+savePayment.onclick=()=>{
+ const code=payReservation.value,amount=Number(payAmount.value),method=payMethod.value;if(!code||!amount)return;const p={id:gen('PAG'),reservation:code,amount,method,date:today()};state.payments.push(p);const r=reservation(code);if(r?.status==='Pendiente')r.status='Confirmada';logAction('RN16: pago/adelanto verificado por S/ '+amount.toFixed(2)+'; reserva '+(r?.status||''),code);saveState();paymentNotice.innerHTML=`<b>Pago registrado.</b> Reserva ${code}: ${r?.status||''}. Puedes emitir el comprobante.`;paymentNotice.classList.remove('hidden');renderAll()
+};
+doCheckin.onclick=()=>{
+ const r=reservation(checkinReservation.value);if(!r)return;const ro=roomObj(r.room);if(!ro||ro.status==='Mantenimiento'||ro.status==='Ocupada'){checkinNotice.textContent='No se puede realizar el check-in por el estado de la habitación.';checkinNotice.classList.remove('hidden');return}r.status='En estadía';ro.status='Ocupada';logAction('Check-in registrado; habitación '+r.room+' pasó a Ocupada',r.code);saveState();checkinNotice.innerHTML=`<b>Check-in registrado.</b> Habitación ${r.room} ahora está Ocupada.`;checkinNotice.classList.remove('hidden');renderAll()
+};
+doCheckout.onclick=()=>{
+ const r=reservation(checkoutReservation.value);if(!r)return;const ro=roomObj(r.room);r.status='Finalizada';if(ro)ro.status='En limpieza';logAction('Check-out registrado; habitación '+r.room+' pasó a En limpieza',r.code);saveState();checkoutNotice.innerHTML=`<b>Check-out registrado.</b> Habitación ${r.room} pasó a En limpieza.`;checkoutNotice.classList.remove('hidden');renderAll()
+};
+reportIncident.onclick=()=>{const room=incidentRoom.value,desc=incidentDesc.value.trim();if(!room||!desc)return;const id=gen('INC');state.incidents.push({id,room,type:incidentType.value,priority:incidentPriority.value,desc,status:'Pendiente',reportedBy:currentRole,date:today()});logAction('Incidencia '+id+' reportada en habitación '+room,id);saveState();incidentNotice.innerHTML='<b>Incidencia reportada.</b> Quedó pendiente para Mantenimiento.';incidentNotice.classList.remove('hidden');incidentDesc.value='';renderAll()};
+saveIncident.onclick=()=>{const room=maintRoom.value,desc=maintDesc.value.trim();if(!room||!desc)return;const id=gen('INC');state.incidents.push({id,room,type:'Técnica',priority:'Media',desc,status:'Pendiente',reportedBy:currentRole,date:today()});logAction('Avería técnica '+id+' reportada en habitación '+room,id);saveState();maintDesc.value='';renderAll()};
+saveTariff.onclick=()=>{const type=tariffType.value,season=tariffSeason.value.trim()||'Regular',price=Number(tariffPrice.value);if(!price)return;let t=state.tariffs.find(x=>x.type===type&&x.season===season);if(t)t.price=price;else state.tariffs.push({type,season,price});state.rooms.filter(r=>r.type===type).forEach(r=>r.rate=price);logAction('RN18: tarifa '+type+' / '+season+' actualizada a S/ '+price.toFixed(2),'Tarifa');saveState();renderAll()};
+addRoomBtn.onclick=()=>{
+ const number=newRoomNumber.value.trim(),type=newRoomType.value,capacity=Number(newRoomCapacity.value),rate=Number(newRoomRate.value),floor=Number(newRoomFloor.value);
+ if(!number||!capacity||!rate||!floor){addRoomNotice.textContent='Completa todos los datos de la habitación.';addRoomNotice.classList.remove('hidden');return}
+ if(state.rooms.some(r=>r.number===number&&r.active)){addRoomNotice.textContent='Ya existe una habitación activa con ese número.';addRoomNotice.classList.remove('hidden');return}
+ state.rooms.push({number,type,capacity,rate,floor,status:'Disponible',active:true});logAction('Habitación '+number+' agregada como Disponible','Hab. '+number);saveState();addRoomNotice.innerHTML=`<b>Habitación ${number} agregada correctamente.</b>`;addRoomNotice.classList.remove('hidden');newRoomNumber.value='';newRoomCapacity.value='1';newRoomRate.value='';newRoomFloor.value='1';renderAll();setTimeout(()=>addRoomNotice.classList.add('hidden'),1800)
+};
+roomSearch.oninput=renderRooms;roomFilter.onchange=renderRooms;refreshReport.onclick=()=>{reload();renderReports()};
+historySearch.oninput=renderHistory;
+evaluateExpirations.onclick=()=>{const n=expirePendingReservations();renderAll();alert(n?`${n} reserva(s) marcada(s) como Vencida.`:'No hay reservas pendientes vencidas con fecha límite configurada.');};
+
+window.addEventListener('storage',e=>{if(e.key===KEY){reload();renderAll()}});
+window.addEventListener('focus',()=>{reload();renderAll()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){reload();renderAll()}});
+
+if(currentRole&&permissions[currentRole]){loginView.classList.add('hidden');appView.classList.remove('hidden');showPage('dashboard')}else{loginView.classList.remove('hidden');appView.classList.add('hidden')}
+})();
+</script>
+</body>
+</html>
